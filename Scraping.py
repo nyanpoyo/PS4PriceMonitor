@@ -24,16 +24,16 @@ class Scraping:
 
     def SaveData(self, dirpass, data, file_name):
         try:
-            fw = open(dirpass + file_name, 'a')
+            fw = open(dirpass + file_name, 'w')
 
         except IOError:
             print("Sorry, couldn't open the file")
 
         else:
             if type(data) is list:
-                fw.writelines(data)
+                fw.writelines(str(data))
             else:
-                fw.write(data + "\n")
+                fw.write(str(data) + "\n")
         finally:
             fw.close()
 
