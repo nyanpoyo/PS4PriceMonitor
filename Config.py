@@ -1,1 +1,2 @@
-dir_pass = "/Users/takumi/PycharmProjects/MonitorUsedPS4Price/"
+dir_pass = "/Users/takumi/PS4PriceMonitor/"
+

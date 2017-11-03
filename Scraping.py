@@ -2,6 +2,8 @@ from urllib.request import urlopen
 from urllib.error import HTTPError
 from urllib.error import URLError
 from bs4 import BeautifulSoup
+import re
+import datetime
 
 
 class Scraping:
@@ -49,3 +51,25 @@ class Scraping:
 
         finally:
             fr.close()
+
+class AmazonScraping(Scraping):
+    def getLowestPrice(self, target):
+        lowest_price_info = target.find("span", {
+            "class": "a-size-large a-color-price olpOfferPrice a-text-bold"}).get_text().replace('\n', '').replace(' ', '')
+        regex = r'\D' #数字以外が対象
+        lowest_price = re.sub(regex,'',lowest_price_info)
+        return lowest_price
+
+    def getStoreEvaluation(self, target):
+        _star = target.findAll("div", {"class": "a-column a-span2 olpSellerColumn"})
+        i = 0
+        while (1):
+            star_info = _star[i]
+            if star_info is not None:
+                break
+            else:
+                i = i + 1
+        temp = star_info.find("b").string
+        regex = r'\D'
+        evaluation = re.sub(regex,'',temp)
+        return evaluation
