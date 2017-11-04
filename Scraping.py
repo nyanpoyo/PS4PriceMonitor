@@ -52,13 +52,26 @@ class Scraping:
         finally:
             fr.close()
 
+
 class AmazonScraping(Scraping):
-    def getLowestPrice(self, target):
-        lowest_price_info = target.find("span", {
+    def getUsedLowestPrice(self, target):
+        used_lowest_price_info = target.find("span", {
             "class": "a-size-large a-color-price olpOfferPrice a-text-bold"}).get_text().replace('\n', '').replace(' ', '')
-        regex = r'\D' #数字以外が対象
-        lowest_price = re.sub(regex,'',lowest_price_info)
-        return lowest_price
+        regex = r'\D'  # 数字以外が対象
+        used_lowest_price = re.sub(regex, '', used_lowest_price_info)
+        return used_lowest_price
+
+    def getNewLowestPrice(self, target):
+        is_sold_out = target.find("span", {"class": "a-size-medium a-color-success"}).get_text().replace('\n', '').replace(' ', '')
+        if is_sold_out == "出品者からお求めいただけます。":
+            print("Sorry, sold out. You can buy it from other exhibitor")
+            return -1
+        else:
+            new_lowest_price_info = target.find("span", {"class": "a-size-medium a-color-price"}).get_text().replace(
+                '\n', '').replace(' ', '')
+            regex = r'\D'
+            new_lowest_price = re.sub(regex, '', new_lowest_price_info)
+            return new_lowest_price
 
     def getStoreEvaluation(self, target):
         _star = target.findAll("div", {"class": "a-column a-span2 olpSellerColumn"})
@@ -71,5 +84,5 @@ class AmazonScraping(Scraping):
                 i = i + 1
         temp = star_info.find("b").string
         regex = r'\D'
-        evaluation = re.sub(regex,'',temp)
+        evaluation = re.sub(regex, '', temp)
         return evaluation
