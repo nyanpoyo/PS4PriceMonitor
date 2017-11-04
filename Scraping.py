@@ -5,6 +5,7 @@ from bs4 import BeautifulSoup
 import re
 import csv
 import sys
+import numpy as np
 import datetime
 
 
@@ -46,7 +47,7 @@ class Scraping:
 
     def SaveDataCSV(self, dirpass, data, file_name):
         try:
-            fw = open(dirpass + file_name, 'w')
+            fw = open(dirpass + file_name, 'a')
 
         except IOError:
             print("Sorry, couldn't open the file")
@@ -74,16 +75,20 @@ class Scraping:
 
 
 class AmazonScraping(Scraping):
+    price_difference = []
 
     def getUsedLowestPrice(self, target):
         used_lowest_price_info = target.find("span", {
-            "class": "a-size-large a-color-price olpOfferPrice a-text-bold"}).get_text().replace('\n', '').replace(' ', '')
+            "class": "a-size-large a-color-price olpOfferPrice a-text-bold"}).get_text().replace('\n', '').replace(' ',
+                                                                                                                   '')
         regex = r'\D'  # 数字以外が対象
         used_lowest_price = re.sub(regex, '', used_lowest_price_info)
         return used_lowest_price
 
     def getNewLowestPrice(self, target):
-        is_sold_out = target.find("span", {"class": "a-size-medium a-color-success"}).get_text().replace('\n', '').replace(' ', '')
+        is_sold_out = target.find("span", {"class": "a-size-medium a-color-success"}).get_text().replace('\n',
+                                                                                                         '').replace(
+            ' ', '')
         if is_sold_out == "出品者からお求めいただけます。":
             print("Sorry, sold out. You can buy it from other exhibitor")
             return -1
@@ -97,7 +102,7 @@ class AmazonScraping(Scraping):
     def getStoreEvaluation(self, target):
         _star = target.findAll("div", {"class": "a-column a-span2 olpSellerColumn"})
         i = 0
-        while (1):
+        while (True):
             star_info = _star[i]
             if star_info is not None:
                 break
@@ -107,3 +112,51 @@ class AmazonScraping(Scraping):
         regex = r'\D'
         evaluation = re.sub(regex, '', temp)
         return evaluation
+
+    def WriteTweetDraft(self, dir_pass, file_name, text_num, ps4):
+        try:
+            fw = open(dir_pass + file_name + str(text_num) + ".txt", 'w')
+
+        except IOError:
+            print("Sorry, couldn't open the file")
+            sys.exit()
+
+        else:
+            date = datetime.datetime.today()
+            draft = "【" + str(date.month) + "月" + str(date.day) + "日" + str(date.hour) + "時" + str(date.minute) + "分" + "】" + "\nShop:" + ps4.shop + "\nModel:" + ps4.model + "\nColor:" + ps4.color + "\nStatus:" + ps4.status + "\nPrice:" + str(ps4.price) + "\nPrice difference:" + str(ps4.price_difference)
+
+            fw.write(draft)
+
+        finally:
+            fw.close()
+
+
+class Control:
+    tweet_timing = False
+    amazon = AmazonScraping()
+
+    def GetLowerPrice(self, dirpass, price_csv, compared_price, target_row, lowest_price, ps4):
+        log_price_list = np.loadtxt(dirpass + price_csv, delimiter=',', usecols=(target_row,))
+        try:
+            lowest_price_in_log = int(np.min(log_price_list))
+        except IndexError:
+            print("It has failed to indicate the compared price list")
+            if log_price_list is None:
+                lowest_price[target_row] = compared_price
+                return True
+        else:
+            if (compared_price <= lowest_price_in_log):
+                lowest_price[target_row] = compared_price
+                ps4.price_difference = lowest_price_in_log - lowest_price[target_row]
+                return True
+            else:
+                lowest_price[target_row] = lowest_price_in_log
+                return False
+
+    def makeOutputList(self, dirpass, price_csv, price_list, output_list, ps4):  # format now price list to output price list
+        lowest_price = [999999 for i in range(len(price_list))]
+        for i in range(len(price_list)):
+            if (self.GetLowerPrice(dirpass, price_csv, price_list[i].price, i, lowest_price, ps4[i])):
+                self.tweet_timing = True
+                output_list.append(lowest_price[i])
+                print(output_list)
