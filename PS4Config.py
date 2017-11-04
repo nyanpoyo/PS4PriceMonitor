@@ -10,6 +10,7 @@ class PS4():
         self.shop_evaluation = 0
         self.price_difference = 0
         self.URL = ""
+        self.can_buy = False
 
     def SetObject(self, bs_obj):
         self.bs_obj = bs_obj

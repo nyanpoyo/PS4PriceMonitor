@@ -77,30 +77,33 @@ class Scraping:
 class AmazonScraping(Scraping):
     price_difference = []
 
-    def getUsedLowestPrice(self, target):
-        used_lowest_price_info = target.find("span", {
+    def getUsedLowestPrice(self, ps4):
+        used_lowest_price_info = ps4.bs_obj.find("span", {
             "class": "a-size-large a-color-price olpOfferPrice a-text-bold"}).get_text().replace('\n', '').replace(' ',
                                                                                                                    '')
         regex = r'\D'  # 数字以外が対象
         used_lowest_price = re.sub(regex, '', used_lowest_price_info)
+        ps4.can_buy = True
         return used_lowest_price
 
-    def getNewLowestPrice(self, target):
-        is_sold_out = target.find("span", {"class": "a-size-medium a-color-success"}).get_text().replace('\n',
+    def getNewLowestPrice(self, ps4):
+        is_sold_out = ps4.bs_obj.find("span", {"class": "a-size-medium a-color-success"}).get_text().replace('\n',
                                                                                                          '').replace(
             ' ', '')
         if is_sold_out == "出品者からお求めいただけます。":
             print("Sorry, sold out. You can buy it from other exhibitor")
-            return -1
+            ps4.can_buy = False
+            return 999999
         else:
-            new_lowest_price_info = target.find("span", {"class": "a-size-medium a-color-price"}).get_text().replace(
+            new_lowest_price_info = ps4.bs_obj.find("span", {"class": "a-size-medium a-color-price"}).get_text().replace(
                 '\n', '').replace(' ', '')
             regex = r'\D'
             new_lowest_price = re.sub(regex, '', new_lowest_price_info)
+            ps4.can_buy = True
             return new_lowest_price
 
-    def getStoreEvaluation(self, target):
-        _star = target.findAll("div", {"class": "a-column a-span2 olpSellerColumn"})
+    def getStoreEvaluation(self, ps4):
+        _star = ps4.bs_obj.findAll("div", {"class": "a-column a-span2 olpSellerColumn"})
         i = 0
         while (True):
             star_info = _star[i]
@@ -123,8 +126,13 @@ class AmazonScraping(Scraping):
 
         else:
             date = datetime.datetime.today()
-            draft = "【" + str(date.month) + "月" + str(date.day) + "日" + str(date.hour) + "時" + str(date.minute) + "分" + "】" + "\nShop:" + ps4.shop + "\nModel:" + ps4.model + "\nColor:" + ps4.color + "\nStatus:" + ps4.status + "\nPrice:" + str(ps4.price) + "\nPrice difference:" + str(ps4.price_difference)
-
+            draft = "【" + str(date.month) + "月" + str(date.day) + "日" + str(date.hour) + "時" + str(date.minute) + "分" + "】" + "\nShop:" + ps4.shop + "\nModel:" + ps4.model + "\nColor:" + ps4.color + "\nStatus:" + ps4.status
+            if(ps4.can_buy):
+             if(ps4.status=="used"):
+                draft = draft + "\nShop Evaluation:" + ps4.shop_evaluation
+             draft = draft + "\nPrice:" + str(ps4.price) + "\nPrice difference:" + str(ps4.price_difference)
+            else:
+                draft = draft + "\nSorry, this product is sold out now. You can buy it other exhibitor."
             fw.write(draft)
 
         finally:
@@ -132,7 +140,6 @@ class AmazonScraping(Scraping):
 
 
 class Control:
-    tweet_timing = False
     amazon = AmazonScraping()
 
     def GetLowerPrice(self, dirpass, price_csv, compared_price, target_row, lowest_price, ps4):
@@ -157,6 +164,5 @@ class Control:
         lowest_price = [999999 for i in range(len(price_list))]
         for i in range(len(price_list)):
             if (self.GetLowerPrice(dirpass, price_csv, price_list[i].price, i, lowest_price, ps4[i])):
-                self.tweet_timing = True
                 output_list.append(lowest_price[i])
                 print(output_list)
