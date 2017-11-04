@@ -32,4 +32,4 @@ if __name__ == '__main__':
     amazon_price_list.append(amazon_new_ps4_JB_500GB_lowest_price)
     amazon_price_list.append(amazon_new_ps4_WH_500GB_lowest_price)
 
-    amazon_scraping.SaveData(Config.dir_pass, amazon_price_list, "AmazonLowestPriceLog.txt")
+    amazon_scraping.SaveDataCSV(Config.dir_pass, amazon_price_list, "AmazonLowestPriceLog.txt")

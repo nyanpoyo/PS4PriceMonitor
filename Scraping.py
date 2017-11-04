@@ -3,6 +3,8 @@ from urllib.error import HTTPError
 from urllib.error import URLError
 from bs4 import BeautifulSoup
 import re
+import csv
+import sys
 import datetime
 
 
@@ -14,22 +16,25 @@ class Scraping:
         except HTTPError as he:
             print("Sorry, The server couldn't fulfill your request")
             print("Error code:", he.code)
+            sys.exit()
 
         except URLError as ue:
             print("Failed to search a server")
             print("Reason:", ue.reason)
+            sys.exit()
 
         else:
             print("Connection Success!")
             URL_contents = BeautifulSoup(self.URL.read(), "lxml")
             return URL_contents
 
-    def SaveData(self, dirpass, data, file_name):
+    def SaveDataList(self, dirpass, data, file_name):
         try:
             fw = open(dirpass + file_name, 'w')
 
         except IOError:
             print("Sorry, couldn't open the file")
+            sys.exit()
 
         else:
             if type(data) is list:
@@ -39,12 +44,27 @@ class Scraping:
         finally:
             fw.close()
 
+    def SaveDataCSV(self, dirpass, data, file_name):
+        try:
+            fw = open(dirpass + file_name, 'w')
+
+        except IOError:
+            print("Sorry, couldn't open the file")
+            sys.exit()
+
+        else:
+            writer = csv.writer(fw, lineterminator='\n')
+            writer.writerow(data)
+        finally:
+            fw.close()
+
     def ReadFile(self, dirpass, file_name):
         try:
             fr = open(dirpass + file_name, 'r')
 
         except IOError:
             print("Sorry, couldn't open the file")
+            sys.exit()
 
         else:
             return fr.read()
@@ -54,6 +74,7 @@ class Scraping:
 
 
 class AmazonScraping(Scraping):
+
     def getUsedLowestPrice(self, target):
         used_lowest_price_info = target.find("span", {
             "class": "a-size-large a-color-price olpOfferPrice a-text-bold"}).get_text().replace('\n', '').replace(' ', '')
