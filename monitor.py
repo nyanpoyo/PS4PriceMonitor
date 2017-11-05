@@ -7,15 +7,17 @@ from Scraping import Control
 from Tweet import Twitter
 
 if __name__ == '__main__':
-    amazon_scraping = AmazonScraping()
-    control = Control()
-    twitter = Twitter()
 
     amazon_ps4 = [PS4("CUH-2000AB01", "500GB", "JB", "used", "amazon"),
                   PS4("CUH-2100AB02", "500GB", "WH", "used", "amazon"),
                   PS4("CUH-2100AB01", "500GB", "JB", "new", "amazon"),
                   PS4("CUH-2100AB02", "500GB", "WH", "new", "amazon")]
 
+    amazon_compare_num = len(amazon_ps4)
+    amazon_scraping = AmazonScraping(amazon_compare_num)
+    amazon_control = Control()
+    twitter = Twitter()
+    tweet_timing = [False for i in range(amazon_compare_num)]
     csv_output_list = []
 
     # Set URL
@@ -44,16 +46,16 @@ if __name__ == '__main__':
     amazon_ps4[1].shop_evaluation = amazon_scraping.getStoreEvaluation(amazon_ps4[1])
 
     # Output to CSV file
-    control.makeOutputList(Config.dir_pass, "AmazonLowestPriceLog.csv", csv_output_list, amazon_ps4)
+    amazon_control.makeOutputList(Config.dir_pass, "AmazonLowestPriceLog.csv", csv_output_list, amazon_ps4, tweet_timing)
 
     amazon_scraping.SaveDataCSV(Config.dir_pass, csv_output_list, "AmazonLowestPriceLog.csv")
     print(csv_output_list)
 
-    for no in range(len(amazon_ps4)):
+    for no in range(amazon_compare_num):
         amazon_scraping.WriteTweetDraft(Config.dir_pass, "TweetDraft", no, amazon_ps4[no])
 
-    if(amazon_scraping.tweet_timing):
-     for i in range(len(amazon_ps4)):
-        twitter.TweetbyDraft(Config.dir_pass, "TweetDraft"+str(i)+".txt")
+    for i in range(amazon_compare_num):
+        if(tweet_timing[i]):
+         twitter.TweetbyDraft(Config.dir_pass, "TweetDraft"+str(i)+".txt")
 
-    print(amazon_scraping.tweet_timing)
+    print(tweet_timing)

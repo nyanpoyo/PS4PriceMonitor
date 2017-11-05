@@ -76,11 +76,14 @@ class Scraping:
 
 class AmazonScraping(Scraping):
     price_difference = []
-    tweet_timing = False
+
+    def __init__(self, comp_num):
+        self.comp_num = comp_num
+        self.tweet_timing = [False for i in range(comp_num)]
 
     def getUsedLowestPrice(self, ps4):
-        used_lowest_price_info = ps4.bs_obj.find("span", {
-            "class": "a-size-large a-color-price olpOfferPrice a-text-bold"}).get_text().replace('\n', '').replace(' ',
+        temp = ps4.bs_obj.findAll("div", {"class": "a-row a-spacing-mini olpOffer"})
+        used_lowest_price_info = temp[0].find("span", { "class": "a-size-large a-color-price olpOfferPrice a-text-bold"}).get_text().replace('\n', '').replace(' ',
                                                                                                                    '')
         regex = r'\D'  # 数字以外が対象
         used_lowest_price = re.sub(regex, '', used_lowest_price_info)
@@ -139,7 +142,7 @@ class AmazonScraping(Scraping):
             if(ps4.can_buy):
              if(ps4.status=="used"):
                 draft = draft + "\nShop Evaluation:" + ps4.shop_evaluation
-             draft = draft + "\nPrice:" + str(ps4.price) + "\nPrice difference:" + str(ps4.price_difference)
+             draft = draft + "\nPrice:" + str(ps4.price) + "\nPrice difference:" + str(ps4.price_difference) + "\nURL:" + ps4.URL
             else:
                 draft = draft + "\nSorry, this product is sold out now. You can buy it other exhibitor."
             fw.write(draft)
@@ -149,12 +152,13 @@ class AmazonScraping(Scraping):
 
 
 class Control:
-    amazon = AmazonScraping()
 
-    def GetLowerPrice(self, dir_pass, price_csv, compared_price, target_row, lowest_price, ps4):
+    def GetLowerPrice(self, dir_pass, price_csv, compared_price, target_row, lowest_price, ps4, tweet_timing):
         log_price_list = np.loadtxt(dir_pass + price_csv, delimiter=',', usecols=(target_row,))
+
         try:
             lowest_price_in_log = int(np.min(log_price_list))
+            print("llog:"+str(lowest_price_in_log))
         except IndexError:
             print("It has failed to indicate the compared price list")
             if log_price_list is None:
@@ -164,18 +168,23 @@ class Control:
             if (compared_price < lowest_price_in_log):
                 lowest_price[target_row] = compared_price
                 ps4.price_difference = lowest_price_in_log - lowest_price[target_row]
+                print("log:"+str(lowest_price_in_log))
+                print("Get:"+str(compared_price))
                 if(ps4.price_difference > 100000):
                     ps4.price_difference = lowest_price[target_row]
-                self.amazon.tweet_timing = True
+                tweet_timing[target_row] = True
+                print(tweet_timing)
 
             else:
                 lowest_price[target_row] = lowest_price_in_log
-                self.amazon.tweet_timing = False
+                tweet_timing[target_row] = False
+                print(tweet_timing[target_row])
 
 
-    def makeOutputList(self, dirpass, price_csv, output_list, ps4):  # format now price list to output price list
+
+    def makeOutputList(self, dirpass, price_csv, output_list, ps4, tweet_timing):  # format now price list to output price list
         lowest_price = [999999 for i in range(len(ps4))]
         for i in range(len(ps4)):
-         self.GetLowerPrice(dirpass, price_csv, int(ps4[i].price), i, lowest_price, ps4[i])
+         self.GetLowerPrice(dirpass, price_csv, int(ps4[i].price), i, lowest_price, ps4[i], tweet_timing)
          output_list.append(lowest_price[i])
          print(output_list)
