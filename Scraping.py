@@ -87,14 +87,22 @@ class AmazonScraping(Scraping):
         return used_lowest_price
 
     def getNewLowestPrice(self, ps4):
-        is_sold_out = ps4.bs_obj.find("span", {"class": "a-size-medium a-color-success"}).get_text().replace('\n',
-                                                                                                         '').replace(
-            ' ', '')
-        if is_sold_out == "出品者からお求めいただけます。":
+        try:
+         is_sold_out = ps4.bs_obj.find("span", {"class": "a-size-medium a-color-success"}).get_text().replace('\n','').replace( ' ', '')
+        except AttributeError:
+            new_lowest_price_info = ps4.bs_obj.find("span",
+                                                    {"class": "a-size-medium a-color-price"}).get_text().replace(
+                '\n', '').replace(' ', '')
+            regex = r'\D'
+            new_lowest_price = re.sub(regex, '', new_lowest_price_info)
+            ps4.can_buy = True
+            return new_lowest_price
+        else:
+         if is_sold_out == "出品者からお求めいただけます。":
             print("Sorry, sold out. You can buy it from other exhibitor")
             ps4.can_buy = False
             return 999999
-        else:
+         else:
             new_lowest_price_info = ps4.bs_obj.find("span", {"class": "a-size-medium a-color-price"}).get_text().replace(
                 '\n', '').replace(' ', '')
             regex = r'\D'
@@ -149,19 +157,22 @@ class Control:
             print("It has failed to indicate the compared price list")
             if log_price_list is None:
                 lowest_price[target_row] = compared_price
-                return True
+
         else:
             if (compared_price <= lowest_price_in_log):
                 lowest_price[target_row] = compared_price
                 ps4.price_difference = lowest_price_in_log - lowest_price[target_row]
-                return True
+                if(ps4.price_difference > 100000):
+                    ps4.price_difference = lowest_price[target_row]
+
+
             else:
                 lowest_price[target_row] = lowest_price_in_log
-                return False
+
 
     def makeOutputList(self, dirpass, price_csv, output_list, ps4):  # format now price list to output price list
         lowest_price = [999999 for i in range(len(ps4))]
         for i in range(len(ps4)):
-            if (self.GetLowerPrice(dirpass, price_csv, int(ps4[i].price), i, lowest_price, ps4[i])):
-                output_list.append(lowest_price[i])
-                print(output_list)
+         self.GetLowerPrice(dirpass, price_csv, int(ps4[i].price), i, lowest_price, ps4[i])
+         output_list.append(lowest_price[i])
+         print(output_list)
