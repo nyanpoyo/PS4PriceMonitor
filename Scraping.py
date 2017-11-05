@@ -79,7 +79,6 @@ class AmazonScraping(Scraping):
 
     def __init__(self, comp_num):
         self.comp_num = comp_num
-        self.tweet_timing = [False for i in range(comp_num)]
 
     def getUsedLowestPrice(self, ps4):
         temp = ps4.bs_obj.findAll("div", {"class": "a-row a-spacing-mini olpOffer"})
@@ -92,27 +91,25 @@ class AmazonScraping(Scraping):
 
     def getNewLowestPrice(self, ps4):
         try:
-         is_sold_out = ps4.bs_obj.find("span", {"class": "a-size-medium a-color-success"}).get_text().replace('\n','').replace( ' ', '')
+         is_sold_out = ps4.bs_obj.find("span", {"class": "a-size-medium a-color-success"}).get_text().replace('\n','').replace(' ', '')
+
         except AttributeError:
-            new_lowest_price_info = ps4.bs_obj.find("span",
-                                                    {"class": "a-size-medium a-color-price"}).get_text().replace(
-                '\n', '').replace(' ', '')
-            regex = r'\D'
-            new_lowest_price = re.sub(regex, '', new_lowest_price_info)
-            ps4.can_buy = True
-            return new_lowest_price
+            print("Attribute Error")
+            sys.exit()
+
         else:
          if is_sold_out == "出品者からお求めいただけます。":
             print("Sorry, sold out. You can buy it from other exhibitor")
             ps4.can_buy = False
             return 999999
-         else:
-            new_lowest_price_info = ps4.bs_obj.find("span", {"class": "a-size-medium a-color-price"}).get_text().replace(
-                '\n', '').replace(' ', '')
+         elif is_sold_out == "在庫あり。":
+            temp = ps4.bs_obj.findAll("tr", {"id": "priceblock_ourprice_row"})
+            new_lowest_price_info = temp[0].find("span", {"class": "a-size-medium a-color-price"}).get_text().replace('\n', '').replace(' ', '')
             regex = r'\D'
             new_lowest_price = re.sub(regex, '', new_lowest_price_info)
             ps4.can_buy = True
             return new_lowest_price
+
 
     def getStoreEvaluation(self, ps4):
         _star = ps4.bs_obj.findAll("div", {"class": "a-column a-span2 olpSellerColumn"})
@@ -138,7 +135,7 @@ class AmazonScraping(Scraping):
 
         else:
             date = datetime.datetime.today()
-            draft = "【" + str(date.month) + "月" + str(date.day) + "日" + str(date.hour) + "時" + str(date.minute) + "分" + "】" + "\nShop:" + ps4.shop + "\nModel:" + ps4.model + "\nColor:" + ps4.color + "\nStatus:" + ps4.status
+            draft = "【" + str(date.month) + "月" + str(date.day) + "日" + str(date.hour) + "時" + str(date.minute) + "分" + "】" + "\nShop:" + ps4.shop + "\nModel:" + ps4.model + "\nStatus:" + ps4.status
             if(ps4.can_buy):
              if(ps4.status=="used"):
                 draft = draft + "\nShop Evaluation:" + ps4.shop_evaluation

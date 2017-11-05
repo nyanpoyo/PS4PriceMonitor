@@ -1,9 +1,8 @@
-【11月5日11時49分】
+【11月5日13時58分】
 Shop:amazon
 Model:CUH-2000AB01
-Color:JB
 Status:used
 Shop Evaluation:96
 Price:27000
-Price difference:1596
+Price difference:0
 URL:https://www.amazon.co.jp/gp/offer-listing/B01LPTFJLO/ref=dp_olp_used?ie=UTF8&condition=used
