@@ -140,10 +140,9 @@ class AmazonScraping(Scraping):
 
 
 class Control:
-    amazon = AmazonScraping()
 
-    def GetLowerPrice(self, dirpass, price_csv, compared_price, target_row, lowest_price, ps4):
-        log_price_list = np.loadtxt(dirpass + price_csv, delimiter=',', usecols=(target_row,))
+    def GetLowerPrice(self, dir_pass, price_csv, compared_price, target_row, lowest_price, ps4):
+        log_price_list = np.loadtxt(dir_pass + price_csv, delimiter=',', usecols=(target_row,))
         try:
             lowest_price_in_log = int(np.min(log_price_list))
         except IndexError:
@@ -160,9 +159,9 @@ class Control:
                 lowest_price[target_row] = lowest_price_in_log
                 return False
 
-    def makeOutputList(self, dirpass, price_csv, price_list, output_list, ps4):  # format now price list to output price list
-        lowest_price = [999999 for i in range(len(price_list))]
-        for i in range(len(price_list)):
-            if (self.GetLowerPrice(dirpass, price_csv, price_list[i].price, i, lowest_price, ps4[i])):
+    def makeOutputList(self, dirpass, price_csv, output_list, ps4):  # format now price list to output price list
+        lowest_price = [999999 for i in range(len(ps4))]
+        for i in range(len(ps4)):
+            if (self.GetLowerPrice(dirpass, price_csv, int(ps4[i].price), i, lowest_price, ps4[i])):
                 output_list.append(lowest_price[i])
                 print(output_list)

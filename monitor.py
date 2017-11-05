@@ -16,7 +16,6 @@ if __name__ == '__main__':
                   PS4("CUH-2100AB01", "500GB", "JB", "new", "amazon"),
                   PS4("CUH-2100AB02", "500GB", "WH", "new", "amazon")]
 
-    amazon_price_list = []
     csv_output_list = []
 
     # Set URL
@@ -45,12 +44,13 @@ if __name__ == '__main__':
     amazon_ps4[1].shop_evaluation = amazon_scraping.getStoreEvaluation(amazon_ps4[1])
 
     # Output to CSV file
-    control.makeOutputList(Config.dir_pass, "AmazonLowestPriceLog.csv", amazon_price_list, csv_output_list, amazon_ps4)
+    control.makeOutputList(Config.dir_pass, "AmazonLowestPriceLog.csv", csv_output_list, amazon_ps4)
 
     amazon_scraping.SaveDataCSV(Config.dir_pass, csv_output_list, "AmazonLowestPriceLog.csv")
+    print(csv_output_list)
 
     for no in range(len(amazon_ps4)):
         amazon_scraping.WriteTweetDraft(Config.dir_pass, "TweetDraft", no, amazon_ps4[no])
 
-    # for i in range(len(amazon_ps4)):
-    #     twitter.TweetbyDraft(Config.dir_pass, "TweetDraft"+str(i)+".txt")
+    for i in range(len(amazon_ps4)):
+        twitter.TweetbyDraft(Config.dir_pass, "TweetDraft"+str(i)+".txt")
