@@ -52,5 +52,8 @@ if __name__ == '__main__':
     for no in range(len(amazon_ps4)):
         amazon_scraping.WriteTweetDraft(Config.dir_pass, "TweetDraft", no, amazon_ps4[no])
 
-    for i in range(len(amazon_ps4)):
+    if(amazon_scraping.tweet_timing):
+     for i in range(len(amazon_ps4)):
         twitter.TweetbyDraft(Config.dir_pass, "TweetDraft"+str(i)+".txt")
+
+    print(amazon_scraping.tweet_timing)

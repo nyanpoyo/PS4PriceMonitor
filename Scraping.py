@@ -76,6 +76,7 @@ class Scraping:
 
 class AmazonScraping(Scraping):
     price_difference = []
+    tweet_timing = False
 
     def getUsedLowestPrice(self, ps4):
         used_lowest_price_info = ps4.bs_obj.find("span", {
@@ -148,6 +149,7 @@ class AmazonScraping(Scraping):
 
 
 class Control:
+    amazon = AmazonScraping()
 
     def GetLowerPrice(self, dir_pass, price_csv, compared_price, target_row, lowest_price, ps4):
         log_price_list = np.loadtxt(dir_pass + price_csv, delimiter=',', usecols=(target_row,))
@@ -159,15 +161,16 @@ class Control:
                 lowest_price[target_row] = compared_price
 
         else:
-            if (compared_price <= lowest_price_in_log):
+            if (compared_price < lowest_price_in_log):
                 lowest_price[target_row] = compared_price
                 ps4.price_difference = lowest_price_in_log - lowest_price[target_row]
                 if(ps4.price_difference > 100000):
                     ps4.price_difference = lowest_price[target_row]
-
+                self.amazon.tweet_timing = True
 
             else:
                 lowest_price[target_row] = lowest_price_in_log
+                self.amazon.tweet_timing = False
 
 
     def makeOutputList(self, dirpass, price_csv, output_list, ps4):  # format now price list to output price list
