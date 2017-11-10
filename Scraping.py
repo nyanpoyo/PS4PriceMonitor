@@ -7,9 +7,12 @@ import csv
 import sys
 import numpy as np
 import datetime
+import matplotlib.pyplot as plt
 
 
 class Scraping:
+    _dir_pass = ""
+
     def DownloadURLContents(self, URL):
         try:
             self.URL = urlopen(URL)
@@ -29,9 +32,9 @@ class Scraping:
             URL_contents = BeautifulSoup(self.URL.read(), "lxml")
             return URL_contents
 
-    def SaveDataList(self, dirpass, data, file_name):
+    def SaveDataList(self , data, file_name):
         try:
-            fw = open(dirpass + file_name, 'w')
+            fw = open(self._dir_pass + file_name, 'w')
 
         except IOError:
             print("Sorry, couldn't open the file")
@@ -45,9 +48,9 @@ class Scraping:
         finally:
             fw.close()
 
-    def SaveDataCSV(self, dirpass, data, file_name):
+    def SaveDataCSV(self, data, file_name):
         try:
-            fw = open(dirpass + file_name, 'a')
+            fw = open(self._dir_pass + file_name, 'a')
 
         except IOError:
             print("Sorry, couldn't open the file")
@@ -59,9 +62,9 @@ class Scraping:
         finally:
             fw.close()
 
-    def ReadFile(self, dirpass, file_name):
+    def ReadFile(self, file_name):
         try:
-            fr = open(dirpass + file_name, 'r')
+            fr = open(self._dir_pass + file_name, 'r')
 
         except IOError:
             print("Sorry, couldn't open the file")
@@ -72,6 +75,15 @@ class Scraping:
 
         finally:
             fr.close()
+
+    def SetDirPass(self, dir_pass):
+        self._dir_pass = dir_pass
+
+
+    def PlotData(self, data, type, color, name):
+        plt.plot(data, type, color)
+        plt.savefig(self._dir_pass + name + ".png")
+
 
 
 class AmazonScraping(Scraping):
@@ -148,14 +160,13 @@ class AmazonScraping(Scraping):
             fw.close()
 
 
-class Control:
+class LogControl:
 
     def GetLowerPrice(self, dir_pass, price_csv, compared_price, target_row, lowest_price, ps4, tweet_timing):
         log_price_list = np.loadtxt(dir_pass + price_csv, delimiter=',', usecols=(target_row,))
 
         try:
             lowest_price_in_log = int(np.min(log_price_list))
-            print("llog:"+str(lowest_price_in_log))
         except IndexError:
             print("It has failed to indicate the compared price list")
             if log_price_list is None:
@@ -165,8 +176,6 @@ class Control:
             if (compared_price < lowest_price_in_log):
                 lowest_price[target_row] = compared_price
                 ps4.price_difference = lowest_price_in_log - lowest_price[target_row]
-                print("log:"+str(lowest_price_in_log))
-                print("Get:"+str(compared_price))
                 if(ps4.price_difference > 100000):
                     ps4.price_difference = lowest_price[target_row]
                 tweet_timing[target_row] = True
@@ -185,3 +194,5 @@ class Control:
          self.GetLowerPrice(dirpass, price_csv, int(ps4[i].price), i, lowest_price, ps4[i], tweet_timing)
          output_list.append(lowest_price[i])
          print(output_list)
+
+

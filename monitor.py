@@ -3,7 +3,7 @@ import PS4Config as ps4_config
 from PS4Config import PS4
 import Config
 import time
-from Scraping import Control
+from Scraping import LogControl
 from Tweet import Twitter
 
 if __name__ == '__main__':
@@ -15,25 +15,21 @@ if __name__ == '__main__':
 
     amazon_compare_num = len(amazon_ps4)
     amazon_scraping = AmazonScraping(amazon_compare_num)
-    amazon_control = Control()
+    amazon_scraping.SetDirPass(Config.dir_pass)
+    amazon_control = LogControl()
     twitter = Twitter()
     tweet_timing = [False for i in range(amazon_compare_num)]
     csv_output_list = []
+    price_archive_list = []
 
     # Set URL
-    amazon_ps4[0].URL = ps4_config.amazon_used_ps4_JB_500GB_URL
-    amazon_ps4[1].URL = ps4_config.amazon_used_ps4_WH_500GB_URL
-    amazon_ps4[2].URL = ps4_config.amazon_new_ps4_JB_500GB_URL
-    amazon_ps4[3].URL = ps4_config.amazon_new_ps4_WH_500GB_URL
+    for i_url in range(amazon_compare_num):
+        amazon_ps4[i_url].URL = ps4_config.amazon_URL_list[i_url]
 
-    # Downloat pages
-    amazon_ps4[0].SetObject(amazon_scraping.DownloadURLContents(amazon_ps4[0].URL))
-    time.sleep(0.5)  # To avoid 503 Error
-    amazon_ps4[1].SetObject(amazon_scraping.DownloadURLContents(amazon_ps4[1].URL))
-    time.sleep(0.5)
-    amazon_ps4[2].SetObject(amazon_scraping.DownloadURLContents(amazon_ps4[2].URL))
-    time.sleep(0.5)
-    amazon_ps4[3].SetObject(amazon_scraping.DownloadURLContents(amazon_ps4[3].URL))
+    # Downloat pagess
+    for i_dl in range(amazon_compare_num):
+        amazon_ps4[i_dl].SetObject(amazon_scraping.DownloadURLContents(amazon_ps4[i_dl].URL))
+        time.sleep(0.5)
 
     # Get lowest price
     amazon_ps4[0].price = amazon_scraping.getUsedLowestPrice(amazon_ps4[0])
@@ -41,15 +37,20 @@ if __name__ == '__main__':
     amazon_ps4[2].price = amazon_scraping.getNewLowestPrice(amazon_ps4[2])
     amazon_ps4[3].price = amazon_scraping.getNewLowestPrice(amazon_ps4[3])
 
+    # Make archive list
+    for i in range(amazon_compare_num):
+        price_archive_list.append(amazon_ps4[i].price)
+
     # Get store evaluation
     amazon_ps4[0].shop_evaluation = amazon_scraping.getStoreEvaluation(amazon_ps4[0])
     amazon_ps4[1].shop_evaluation = amazon_scraping.getStoreEvaluation(amazon_ps4[1])
 
     # Output to CSV file
     amazon_control.makeOutputList(Config.dir_pass, "AmazonLowestPriceLog.csv", csv_output_list, amazon_ps4, tweet_timing)
-
-    amazon_scraping.SaveDataCSV(Config.dir_pass, csv_output_list, "AmazonLowestPriceLog.csv")
+    amazon_scraping.SaveDataCSV(csv_output_list, "AmazonLowestPriceLog.csv")
+    amazon_scraping.SaveDataCSV(price_archive_list, "AmazonPriceLog.csv")
     print(csv_output_list)
+    print(price_archive_list)
 
     for no in range(amazon_compare_num):
         amazon_scraping.WriteTweetDraft(Config.dir_pass, "TweetDraft", no, amazon_ps4[no])
