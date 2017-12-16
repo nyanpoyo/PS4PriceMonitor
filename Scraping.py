@@ -32,7 +32,7 @@ class Scraping:
             URL_contents = BeautifulSoup(self.URL.read(), "lxml")
             return URL_contents
 
-    def SaveDataList(self , data, file_name):
+    def SaveDataList(self, data, file_name):
         try:
             fw = open(self._dir_pass + file_name, 'w')
 
@@ -79,11 +79,9 @@ class Scraping:
     def SetDirPass(self, dir_pass):
         self._dir_pass = dir_pass
 
-
     def PlotData(self, data, type, color, name):
         plt.plot(data, type, color)
         plt.savefig(self._dir_pass + name + ".png")
-
 
 
 class AmazonScraping(Scraping):
@@ -93,35 +91,46 @@ class AmazonScraping(Scraping):
         self.comp_num = comp_num
 
     def getUsedLowestPrice(self, ps4):
-        temp = ps4.bs_obj.findAll("div", {"class": "a-row a-spacing-mini olpOffer"})
-        used_lowest_price_info = temp[0].find("span", { "class": "a-size-large a-color-price olpOfferPrice a-text-bold"}).get_text().replace('\n', '').replace(' ',
-                                                                                                                   '')
-        regex = r'\D'  # 数字以外が対象
-        used_lowest_price = re.sub(regex, '', used_lowest_price_info)
-        ps4.can_buy = True
-        return used_lowest_price
+        try:
+            temp = ps4.bs_obj.findAll("div", {"class": "a-row a-spacing-mini olpOffer"})
+            is_empty = temp[0]
+        except(IndexError):
+            print("No production")
+            sys.exit()
+        else:
+            used_lowest_price_info = temp[0].find("span", {
+                "class": "a-size-large a-color-price olpOfferPrice a-text-bold"}).get_text().replace('\n', '').replace(
+                ' ', '')
+            regex = r'\D'  # 数字以外が対象
+            used_lowest_price = re.sub(regex, '', used_lowest_price_info)
+            ps4.can_buy = True
+            return used_lowest_price
 
     def getNewLowestPrice(self, ps4):
         try:
-         is_sold_out = ps4.bs_obj.find("span", {"class": "a-size-medium a-color-success"}).get_text().replace('\n','').replace(' ', '')
+            is_sold_out = ps4.bs_obj.find("span", {"class": "a-size-medium a-color-success"}).get_text().replace('\n',
+                                                                                                                 '').replace(
+                ' ', '')
 
         except AttributeError:
             print("Attribute Error")
             sys.exit()
 
         else:
-         if is_sold_out == "出品者からお求めいただけます。":
-            print("Sorry, sold out. You can buy it from other exhibitor")
-            ps4.can_buy = False
-            return 999999
-         elif is_sold_out == "在庫あり。":
-            temp = ps4.bs_obj.findAll("tr", {"id": "priceblock_ourprice_row"})
-            new_lowest_price_info = temp[0].find("span", {"class": "a-size-medium a-color-price"}).get_text().replace('\n', '').replace(' ', '')
-            regex = r'\D'
-            new_lowest_price = re.sub(regex, '', new_lowest_price_info)
-            ps4.can_buy = True
-            return new_lowest_price
-
+            if is_sold_out == "出品者からお求めいただけます。":
+                print("Sorry, sold out. You can buy it from other exhibitor")
+                ps4.can_buy = False
+                return 999999
+            elif is_sold_out == "在庫あり。":
+                temp = ps4.bs_obj.findAll("tr", {"id": "priceblock_ourprice_row"})
+                new_lowest_price_info = temp[0].find("span",
+                                                     {"class": "a-size-medium a-color-price"}).get_text().replace('\n',
+                                                                                                                  '').replace(
+                    ' ', '')
+                regex = r'\D'
+                new_lowest_price = re.sub(regex, '', new_lowest_price_info)
+                ps4.can_buy = True
+                return new_lowest_price
 
     def getStoreEvaluation(self, ps4):
         _star = ps4.bs_obj.findAll("div", {"class": "a-column a-span2 olpSellerColumn"})
@@ -147,11 +156,13 @@ class AmazonScraping(Scraping):
 
         else:
             date = datetime.datetime.today()
-            draft = "【" + str(date.month) + "月" + str(date.day) + "日" + str(date.hour) + "時" + str(date.minute) + "分" + "】" + "\nShop:" + ps4.shop + "\nModel:" + ps4.model + "\nStatus:" + ps4.status
-            if(ps4.can_buy):
-             if(ps4.status=="used"):
-                draft = draft + "\nShop Evaluation:" + ps4.shop_evaluation
-             draft = draft + "\nPrice:" + str(ps4.price) + "\nPrice difference:" + str(ps4.price_difference) + "\nURL:" + ps4.URL
+            draft = "【" + str(date.month) + "月" + str(date.day) + "日" + str(date.hour) + "時" + str(
+                date.minute) + "分" + "】" + "\nShop:" + ps4.shop + "\nModel:" + ps4.model + "\nStatus:" + ps4.status
+            if (ps4.can_buy):
+                if (ps4.status == "used"):
+                    draft = draft + "\nShop Evaluation:" + ps4.shop_evaluation
+                draft = draft + "\nPrice:" + str(ps4.price) + "\nPrice difference:" + str(
+                    ps4.price_difference) + "\nURL:" + ps4.URL
             else:
                 draft = draft + "\nSorry, this product is sold out now. You can buy it other exhibitor."
             fw.write(draft)
@@ -161,7 +172,6 @@ class AmazonScraping(Scraping):
 
 
 class LogControl:
-
     def GetLowerPrice(self, dir_pass, price_csv, compared_price, target_row, lowest_price, ps4, tweet_timing):
         log_price_list = np.loadtxt(dir_pass + price_csv, delimiter=',', usecols=(target_row,))
 
@@ -176,7 +186,7 @@ class LogControl:
             if (compared_price < lowest_price_in_log):
                 lowest_price[target_row] = compared_price
                 ps4.price_difference = lowest_price_in_log - lowest_price[target_row]
-                if(ps4.price_difference > 100000):
+                if (ps4.price_difference > 100000):
                     ps4.price_difference = lowest_price[target_row]
                 tweet_timing[target_row] = True
                 print(tweet_timing)
@@ -186,13 +196,10 @@ class LogControl:
                 tweet_timing[target_row] = False
                 print(tweet_timing[target_row])
 
-
-
-    def makeOutputList(self, dirpass, price_csv, output_list, ps4, tweet_timing):  # format now price list to output price list
+    def makeOutputList(self, dirpass, price_csv, output_list, ps4,
+                       tweet_timing):  # format now price list to output price list
         lowest_price = [999999 for i in range(len(ps4))]
         for i in range(len(ps4)):
-         self.GetLowerPrice(dirpass, price_csv, int(ps4[i].price), i, lowest_price, ps4[i], tweet_timing)
-         output_list.append(lowest_price[i])
-         print(output_list)
-
-
+            self.GetLowerPrice(dirpass, price_csv, int(ps4[i].price), i, lowest_price, ps4[i], tweet_timing)
+            output_list.append(lowest_price[i])
+            print(output_list)
