@@ -1,8 +1,8 @@
-【11月5日13時58分】
+【11月6日21時11分】
 Shop:amazon
 Model:CUH-2100AB02
 Status:used
-Shop Evaluation:91
-Price:30000
-Price difference:0
+Shop Evaluation:96
+Price:28950
+Price difference:699
 URL:https://www.amazon.co.jp/gp/offer-listing/B073QT5JK1/ref=dp_olp_used?ie=UTF8&condition=used
